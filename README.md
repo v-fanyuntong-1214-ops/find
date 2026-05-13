@@ -1,89 +1,123 @@
-```java
-public record AnswerInputRequest(
-        Integer titleId,
-        Integer userId,
-        String mainText
-) {
+```typescript
+import { useEffect, useState } from "react";
+import { useParams } from "react-router";
+
+type Answer = {
+  answerId: number;
+  userName: string;
+  mainText: string;
+  createdAt: string;
+  goodCount: number;
+};
+
+function handleGoodClick(userId: number, answerId: number) {
+  fetch(`${import.meta.env.VITE_REST_BASE_URL}/api/answer/good`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: userId,
+      answerId: answerId,
+    }),
+  }).then((response: Response) => {
+    if (response.ok) {
+      window.location.reload();
+    }
+  });
 }
-```
 
-```java
-@RestController
-@RequestMapping("/api/answer-input")
-public class AnswerInputController {
+function AnswerRow(props: { answer: Answer; userId: number; titleId: string }) {
+  function handleDeleteClick(answerId: number) {
+    fetch(
+      `${import.meta.env.VITE_REST_BASE_URL}/api/answer/${props.titleId}/${answerId}`,
+      {
+        method: "DELETE",
+      }
+    ).then((response: Response) => {
+      if (response.ok) {
+        window.location.reload();
+      }
+    });
+  }
 
-    private final AnswerInputService answerInputService;
+  return (
+    <tr>
+      <td>{props.answer.userName}</td>
+      <td>{props.answer.mainText}</td>
+      <td>
+        {new Date(props.answer.createdAt).toLocaleDateString("ja-JP", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </td>
+      <td className="text-end">
+        <button
+          className="like"
+          type="button"
+          onClick={() => handleGoodClick(props.userId, props.answer.answerId)}
+        >
+          ♡
+        </button>
 
-    public AnswerInputController(
-            AnswerInputService answerInputService
-    ) {
-        this.answerInputService = answerInputService;
-    }
+        <span>{props.answer.goodCount}</span>
 
-    @PostMapping("")
-    public void post(
-            @RequestBody AnswerInputRequest request
-    ) {
-        answerInputService.post(request);
-    }
+        <button
+          type="button"
+          onClick={() => handleDeleteClick(props.answer.answerId)}
+        >
+          削除
+        </button>
+      </td>
+    </tr>
+  );
 }
-```
 
-```java
-@Service
-public class AnswerInputService {
+export default function AnswerList() {
+  const [answers, setAnswers] = useState<Answer[]>([]);
+  const { title_id } = useParams();
 
-    private final AnswerInputRepository repository;
+  const user_id = 1;
 
-    public AnswerInputService(
-            AnswerInputRepository repository
-    ) {
-        this.repository = repository;
-    }
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_REST_BASE_URL}/api/answer/${title_id}`)
+      .then((response: Response) => response.json())
+      .then((data: Answer[]) => setAnswers(data));
+  }, [title_id]);
 
-    public void post(AnswerInputRequest request) {
+  return (
+    <div className="table-responsive">
+      <table className="table table-striped table-bordered align-middle mb-0">
+        <thead className="table-light">
+          <tr>
+            <th scope="col">回答者名</th>
+            <th scope="col">回答内容</th>
+            <th scope="col">回答日時</th>
+            <th scope="col">いいねボタン</th>
+          </tr>
+        </thead>
 
-        if (request.mainText() == null ||
-            request.mainText().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "回答を入力してください"
-            );
-        }
-
-        repository.insert(request);
-    }
-}
-```
-
-```java
-@Repository
-public class AnswerInputRepository {
-
-    private final JdbcTemplate jdbcTemplate;
-
-    public AnswerInputRepository(
-            JdbcTemplate jdbcTemplate
-    ) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
-
-    public void insert(
-            AnswerInputRequest request
-    ) {
-
-        jdbcTemplate.update("""
-            INSERT INTO answer(
-                title_id,
-                user_id,
-                main_text
-            )
-            VALUES (?, ?, ?)
-            """,
-            request.titleId(),
-            request.userId(),
-            request.mainText()
-        );
-    }
+        <tbody>
+          {answers.length > 0 ? (
+            answers.map((answer: Answer) => (
+              <AnswerRow
+                key={answer.answerId}
+                answer={answer}
+                userId={user_id}
+                titleId={title_id ?? ""}
+              />
+            ))
+          ) : (
+            <tr>
+              <td colSpan={4}>No data</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 ```
