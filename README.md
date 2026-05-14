@@ -1,35 +1,17 @@
-AnswerList
+AnswerRow
 ```typescript
-const [sortOrder, setSortOrder] = useState<"new" | "old">("new");
+function AnswerRow(props: { answer: Answer; userId: number }) {
 ```
 
-return 里、<table> 上面
 ```typescript
-<select
-  value={sortOrder}
-  onChange={(e) => setSortOrder(e.target.value as "new" | "old")}
->
-  <option value="new">新しい順</option>
-  <option value="old">古い順</option>
-</select>
-```
-
-answers.map((answer: Answer) => (
-change to
-```typescript
-{[...answers]
-  .sort((a, b) => {
-    if (sortOrder === "new") {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    } else {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+function handleDeleteClick(answerId: number) {
+  fetch(`http://localhost:8080/api/answer/${answerId}`, {
+    method: "DELETE",
+  }).then((response: Response) => {
+    if (response.ok) {
+      window.location.reload();
     }
-  })
-  .map((answer: Answer) => (
-    <AnswerRow
-      key={answer.answerId}
-      answer={answer}
-      userId={user_id}
-    />
-  ))}
+  });
+}
 ```
+
