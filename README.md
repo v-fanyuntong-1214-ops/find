@@ -1,28 +1,79 @@
 ```typescript
-const [sortOrder, setSortOrder] = useState<"new" | "old">("new");
+  const handleEditSave = () => {
+    const requestBody = {
+      mainText: editText,
+    };
 
-const sortedAnswers = [...answers].sort((a, b) => {
-  const dateA = new Date(a.createdAt).getTime();
-  const dateB = new Date(b.createdAt).getTime();
-
-  return sortOrder === "new" ? dateB - dateA : dateA - dateB;
-});
+    api
+      .sendJson(`/api/answer/${props.answer.answerId}`, requestBody, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response: Response) => {
+        if (response.ok) {
+          window.location.reload();
+        }
+      });
+  };
 
 ```
+
 ```typescript
-return (
-  <div className="table-responsive">
-    <div className="mb-2 text-end">
-      <select
-        className="form-select w-auto d-inline-block"
-        value={sortOrder}
-        onChange={(e) => setSortOrder(e.target.value as "new" | "old")}
-      >
-        <option value="new">新しい順</option>
-        <option value="old">古い順</option>
-      </select>
-    </div>
 
-    <table className="table table-striped table-bordered align-middle mb-0">
+
+<td>
+  {isEditing ? (
+    <textarea
+      value={editText}
+      onChange={(e) => setEditText(e.target.value)}
+    />
+  ) : (
+    props.answer.mainText
+  )}
+</td>
+
 ```
+
+
+```typescript
+
+<td>
+  {isEditing ? (
+    <>
+      <button type="button" onClick={handleEditSave}>
+        保存
+      </button>
+      <button type="button" onClick={() => setIsEditing(false)}>
+        キャンセル
+      </button>
+    </>
+  ) : (
+    <button type="button" onClick={() => setIsEditing(true)}>
+      編集
+    </button>
+  )}
+
+  <button
+    type="button"
+    onClick={() =>
+      handleDeleteClick(
+        props.titleId,
+        props.userId,
+        props.answer.answerId,
+        api,
+        navigate,
+      )
+    }
+  >
+    削除
+  </button>
+</td>
+
+```
+
+
+
+
 
